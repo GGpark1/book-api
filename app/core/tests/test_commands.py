@@ -5,11 +5,11 @@ from unittest.mock import patch
 from psycopg2 import OperationalError as Psycopg2Error
 from django.core.management import call_command
 from django.db.utils import OperationalError
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 
 @patch('core.management.commands.wait_for_db.Command.check')
-class CommandTests(SimpleTestCase):
+class CommandTests(TestCase):
     """Test command"""
 
     def test_wait_for_db(self, patched_check):
