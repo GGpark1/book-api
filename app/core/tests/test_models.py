@@ -68,3 +68,30 @@ class ModelTests(TestCase):
                     **payload
                 )
 
+    def test_create_superuser(self):
+        """Test create superuser."""
+        user = get_user_model().objects.create_superuser(
+            'test1@example.com',
+            'test123',
+        )
+
+        self.assertTrue(user.is_superuser)
+        self.assertTrue(user.is_staff)
+
+    def test_create_book(self):
+        """Test creating a book is successful."""
+        book = models.Book.objects.create(
+            title='The Capital',
+            price=3000,
+            description='Description of the The capital.'
+        )
+
+        self.assertEqual(str(book), book.title)
+
+    def test_create_author(self):
+        """Test creating a author is successful."""
+        author = models.Author.objects.create(
+            name='John',
+            email='test@example.com',
+        )
+
