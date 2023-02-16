@@ -38,3 +38,10 @@ class AuthorViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.order_by('-name')
+
+    def get_serializer_class(self):
+        """Return the serializer class for request."""
+        if self.action == 'create':
+            return serializers.AuthorCreateSerializer
+
+        return self.serializer_class

@@ -196,7 +196,7 @@ class PrivateBookApiTest(TestCase):
         payload = {
             'authors': [
                 {'name': 'test name',
-                 'email': 'test@example.com'}
+                 'email': 'author@example.com'}
                 ]
             }
         url = detail_url(book.id)
@@ -204,8 +204,8 @@ class PrivateBookApiTest(TestCase):
         book.refresh_from_db()
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        new_author = Author.objects.get(name=payload['authors'][0]['name'],
-                                        email=payload['authors'][0]['email'])
+        new_author = Author.objects.get(name='test name',
+                                        email='author@example.com')
         self.assertIn(new_author, book.authors.all())
 
     def test_update_book_assign_author(self):
@@ -218,7 +218,7 @@ class PrivateBookApiTest(TestCase):
         book.authors.add(first_author)
 
         second_author = Author.objects.create(
-            name='test name2'
+            name='test name2',
             email='test2@example.com'
         )
         payload = {
@@ -230,8 +230,21 @@ class PrivateBookApiTest(TestCase):
         }
         url = detail_url(book.id)
         res = self.client.patch(url, payload, format='json')
-        book.refresh_from_db()
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn(second_author, book.authors.all())
         self.assertNotIn(first_author, book.authors.all())
+
+    def test_clear_book_authors(self):
+        """Test clearing a book tags"""
+        author = Author.objects.create(name='test name1',
+                                       email='test1@example.com')
+        book = create_book()
+        book.authors.add(author)
+
+        payload = {'authors': []}
+        url = detail_url(book.id)
+        res = self.client.patch(url, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(book.authors.count(), 0)
