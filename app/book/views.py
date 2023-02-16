@@ -1,15 +1,14 @@
 """
 Views for the book APIs.
 """
-from rest_framework import (
-    viewsets,
-    mixins,
-    status,
-)
+from rest_framework import viewsets
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Book
+from core.models import (
+    Book,
+    Author
+    )
 from core.permissions import IsAdminOrReadOnly
 from book import serializers
 
@@ -29,3 +28,13 @@ class BookViewSet(viewsets.ModelViewSet):
             return serializers.BookSerializer
 
         return self.serializer_class
+
+
+class AuthorViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.AuthorSerializer
+    queryset = Author.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        return self.queryset.order_by('-name')

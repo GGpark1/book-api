@@ -11,6 +11,7 @@ from book import views
 
 router = DefaultRouter()
 router.register(r'books', views.BookViewSet)
+router.register(r'authors', views.AuthorViewSet)
 
 app_name = 'book'
 

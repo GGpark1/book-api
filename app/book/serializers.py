@@ -4,6 +4,7 @@ Serializers for book APIs.
 from rest_framework import serializers
 from core.models import (
     Book,
+    Author,
 )
 
 class BookSerializer(serializers.ModelSerializer):
@@ -22,3 +23,14 @@ class BookDetailSerializer(BookSerializer):
 
     class Meta(BookSerializer.Meta):
         fields = BookSerializer.Meta.fields + ['description']
+
+
+class AuthorSerializer(serializers.ModelSerializer):
+    """Serializer for authors."""
+
+    class Meta:
+        model = Author
+        fields = [
+            'id', 'name', 'email',
+        ]
+        read_only_fields = ['id']

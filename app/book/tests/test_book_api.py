@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 
 from core.models import (
     Book,
+    Author,
 )
 from book.serializers import (
     BookSerializer,
@@ -64,7 +65,7 @@ class PrivateBookApiTest(TestCase):
             email='superuser@example.com',
             password='superuser123'
         )
-        self.client.force_authenticate(self.user)
+        self.client.force_authenticate(self.superuser)
 
     def test_retrieve_books(self):
         """Test retrieving a list of books."""
@@ -72,6 +73,7 @@ class PrivateBookApiTest(TestCase):
         create_book()
         create_book()
 
+        self.client.force_authenticate(self.user)
         res = self.client.get(BOOK_URL)
 
         books = Book.objects.all().order_by('-id')
@@ -84,6 +86,7 @@ class PrivateBookApiTest(TestCase):
         book = create_book()
 
         url = detail_url(book.id)
+        self.client.force_authenticate(self.user)
         res = self.client.get(url)
 
         serializer = BookDetailSerializer(book)
@@ -97,8 +100,6 @@ class PrivateBookApiTest(TestCase):
             'price': 10000,
             'description': 'Sample Description'
         }
-
-        self.client.force_authenticate(self.superuser)
         res = self.client.post(BOOK_URL, payload)
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
@@ -114,6 +115,7 @@ class PrivateBookApiTest(TestCase):
             'description': 'Sample Description'
         }
 
+        self.client.force_authenticate(self.user)
         res = self.client.post(BOOK_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -127,7 +129,6 @@ class PrivateBookApiTest(TestCase):
 
         payload = {'title': 'New Title'}
         url = detail_url(book.id)
-        self.client.force_authenticate(self.superuser)
         res = self.client.patch(url, payload)
 
         book.refresh_from_db()
@@ -145,7 +146,6 @@ class PrivateBookApiTest(TestCase):
             'price': 20000
         }
 
-        self.client.force_authenticate(self.superuser)
         url = detail_url(book.id)
         res = self.client.put(url, payload)
 
@@ -158,9 +158,80 @@ class PrivateBookApiTest(TestCase):
         """Test deleting a book successful."""
         book = create_book()
 
-        self.client.force_authenticate(self.superuser)
         url = detail_url(book.id)
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Book.objects.filter(id=book.id).exists())
+
+    def test_create_book_with_new_authors(self):
+        """Test creating a book with new authors."""
+        payload = {
+            'title': 'test title',
+            'description': 'test description',
+            'price': 10000,
+            'authors': [
+                {'name': 'test name1', 'email': 'test1@example.com'},
+                {'name': 'test name2', 'email': 'test2@example.com'}
+                        ]
+        }
+        res = self.client.post(BOOK_URL, payload, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        books = Book.objects.filter(title=payload['title'])
+        self.assertEqual(books.count(), 1)
+        book = books[0]
+        self.assertEqual(book.authors.count(), 2)
+        for author in payload['authors']:
+            exists = book.authors.filter(
+                name=author['name'],
+                email=author['email']
+            ).exists()
+            self.assertTrue(exists)
+
+    def test_create_author_on_update(self):
+        """Test creating authors when updating a book."""
+        book = create_book()
+
+        payload = {
+            'authors': [
+                {'name': 'test name',
+                 'email': 'test@example.com'}
+                ]
+            }
+        url = detail_url(book.id)
+        res = self.client.patch(url, payload, format='json')
+        book.refresh_from_db()
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        new_author = Author.objects.get(name=payload['authors'][0]['name'],
+                                        email=payload['authors'][0]['email'])
+        self.assertIn(new_author, book.authors.all())
+
+    def test_update_book_assign_author(self):
+        """Test assigning an existing author when updating a book."""
+        first_author = Author.objects.create(
+            name='test name1',
+            email='test1@example.com',
+        )
+        book = create_book()
+        book.authors.add(first_author)
+
+        second_author = Author.objects.create(
+            name='test name2'
+            email='test2@example.com'
+        )
+        payload = {
+            'authors':
+                [
+                    {'name': 'test name2',
+                     'email': 'test2@example.com',}
+                    ]
+        }
+        url = detail_url(book.id)
+        res = self.client.patch(url, payload, format='json')
+        book.refresh_from_db()
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(second_author, book.authors.all())
+        self.assertNotIn(first_author, book.authors.all())

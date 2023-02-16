@@ -61,7 +61,7 @@ class Book(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     price = models.IntegerField(null=False)
-    author = models.ManyToManyField('Author')
+    authors = models.ManyToManyField('Author')
 
     def __str__(self):
         return self.title
