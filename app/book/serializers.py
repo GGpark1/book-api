@@ -5,17 +5,40 @@ from rest_framework import serializers
 from core.models import (
     Book,
     Author,
+    Genre,
 )
+
+class GenreSerializer(serializers.ModelSerializer):
+    """Serializer for Genres."""
+
+    class Meta:
+        model = Genre
+        fields = ['id', 'name']
+        read_only_fields = ['id']
+
+
+class AuthorCreateSerializer(GenreSerializer):
+
+    class Meta(GenreSerializer.Meta):
+        fields = GenreSerializer.Meta.fields
+
+    def validate_email(self, value):
+            if value is not None:
+                genre_name = Genre.objects.filter(name=value).exists()
+                if genre_name:
+                    raise serializers.ValidationError("It's already exist.")
+
+            return value
+
 
 class AuthorSerializer(serializers.ModelSerializer):
     """Serializer for authors."""
 
     class Meta:
         model = Author
-        fields = [
-            'id', 'name', 'email',
-        ]
+        fields = ['id', 'name', 'email']
         read_only_fields = ['id']
+
 
 class AuthorCreateSerializer(AuthorSerializer):
 
@@ -27,8 +50,6 @@ class AuthorCreateSerializer(AuthorSerializer):
                 author_emails = Author.objects.filter(email=value).exists()
                 if author_emails:
                     raise serializers.ValidationError("Email is already in use.")
-                else:
-                    return value
 
             return value
 

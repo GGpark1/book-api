@@ -7,7 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 
 from core.models import (
     Book,
-    Author
+    Author,
+    Genre,
     )
 from core.permissions import IsAdminOrReadOnly
 from book import serializers
@@ -43,5 +44,22 @@ class AuthorViewSet(viewsets.ModelViewSet):
         """Return the serializer class for request."""
         if self.action == 'create':
             return serializers.AuthorCreateSerializer
+
+        return self.serializer_class
+
+
+class GenreViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.GenreSerializer
+    queryset = Genre.objects.all()
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        return self.queryset.order_by('-name')
+
+    def get_serializer_class(self):
+        """Return the serializer class for request."""
+        if self.action == 'create':
+            return serializers.GenreCreateSerializer
 
         return self.serializer_class

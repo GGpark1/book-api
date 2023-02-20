@@ -95,3 +95,11 @@ class ModelTests(TestCase):
             email='test@example.com',
         )
 
+        self.assertEqual(str(author), author.name)
+
+    def test_create_genre(self):
+        """Test creaing a genre is successful."""
+        genre = models.Genre.objects.create(name='Novel')
+
+        self.assertEqual(str(genre), genre.name)
+

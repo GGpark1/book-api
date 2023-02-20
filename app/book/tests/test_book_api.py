@@ -248,3 +248,6 @@ class PrivateBookApiTest(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(book.authors.count(), 0)
+
+    def test_create_book_with_new_genre(self):
+        """Test creating a book with new book."""
